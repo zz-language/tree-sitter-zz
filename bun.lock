@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 2,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "tree-sitter-zz",
+      "devDependencies": {
+        "tree-sitter-cli": "^0.27.0",
+      },
+    },
+  },
+  "packages": {
+    "tree-sitter-cli": ["tree-sitter-cli@0.27.0", "", { "bin": { "tree-sitter": "cli.js" } }, "sha512-E42kR0og1mFlZBxPj7K4fBXCTjxPTGe19U9RXGWNq0FQKzXOxIp8bhCYFMKhddiVZUsJwW35MYGU9Q1oVYtpbA=="],
+  }
+}

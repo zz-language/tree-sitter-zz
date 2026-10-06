@@ -15,8 +15,6 @@ module.exports = grammar({
 
   extras: ($) => [/\s/, $.line_comment, $.block_comment],
 
-  conflicts: ($) => [[$.string, $.interpolation], [$.triple_string, $.interpolation]],
-
   rules: {
     source_file: ($) => repeat($._item),
 
@@ -28,7 +26,6 @@ module.exports = grammar({
         $.impl_block,
         $.const_definition,
         $.extern_block,
-        $.decorator,
         $._statement,
       ),
 
@@ -48,6 +45,7 @@ module.exports = grammar({
     function_definition: ($) =>
       seq(
         repeat($.decorator),
+        optional("pub"),
         "func",
         field("name", $.identifier),
         field("parameters", $.parameter_list),
@@ -62,6 +60,7 @@ module.exports = grammar({
 
     struct_definition: ($) =>
       seq(
+        optional("pub"),
         "struct",
         field("name", $.type_identifier),
         "{",
@@ -71,6 +70,7 @@ module.exports = grammar({
 
     impl_block: ($) =>
       seq(
+        optional("pub"),
         "impl",
         field("name", $.type_identifier),
         "{",
@@ -79,7 +79,7 @@ module.exports = grammar({
       ),
 
     const_definition: ($) =>
-      seq("const", field("name", $.identifier), optional(seq(":", $._type)), "=", $._expression),
+      seq(optional("pub"), "const", field("name", $.identifier), optional(seq(":", $._type)), "=", $._expression),
 
     extern_block: ($) => seq("extern", '"', /[^"]*/, '"', "{", repeat($._extern_item), "}"),
 
@@ -89,22 +89,17 @@ module.exports = grammar({
     _type: ($) =>
       choice(
         $.primitive_type,
-        $.generic_type,
         $.named_type,
         $.array_type,
         $.dict_type,
         $.union_type,
         $.option_type,
         $.tuple_type,
-        $.unit_type,
         $.pointer_type,
         $.function_type,
       ),
 
     primitive_type: (_) => choice("int", "float", "bool", "str", "unit", "void"),
-
-    generic_type: ($) =>
-      seq(field("name", $.type_identifier), "<", commaSep1($._type), ">"),
 
     named_type: ($) =>
       seq(field("name", $.type_identifier), optional(seq("<", commaSep1($._type), ">"))),
@@ -119,24 +114,22 @@ module.exports = grammar({
 
     option_type: ($) => prec(2, seq($._type, "?")),
 
-    tuple_type: ($) => seq("(", commaSep($._type), ")"),
+    tuple_type: ($) => seq("(", optional(seq($._type, ",", commaSep($._type))), ")"),
 
-    unit_type: (_) => seq("(", ")"),
-
-    pointer_type: ($) => seq("*", choice("const", "mut"), $._type),
+    pointer_type: ($) => seq("*const", $._type),
 
     function_type: ($) =>
       seq("func", $.parameter_list, optional(seq("->", $._type))),
 
     // ── Statements ──────────────────────────────────────────────────────
+    // NOTE: if/match live ONLY in _expression (expression_statement covers
+    // their statement use) — listing them here too is an LR conflict.
     _statement: ($) =>
       choice(
         $.return_statement,
         $.declare_statement,
-        $.if_expression,
         $.while_loop,
         $.for_loop,
-        $.match_expression,
         $.break_statement,
         $.continue_statement,
         $.defer_statement,
@@ -148,8 +141,8 @@ module.exports = grammar({
 
     return_statement: ($) => prec.right(seq("return", optional($._expression))),
 
-    break_statement: (_) => "break",
-    continue_statement: (_) => "continue",
+    break_statement: ($) => "break",
+    continue_statement: ($) => "continue",
     defer_statement: ($) => prec.right(seq("defer", $._expression)),
 
     block: ($) => seq("{", repeat($._statement), "}"),
@@ -205,6 +198,9 @@ module.exports = grammar({
         $.range_expression,
         $.or_expression,
         $.and_expression,
+        $.bitor_expression,
+        $.bitxor_expression,
+        $.bitand_expression,
         $.equality_expression,
         $.comparison_expression,
         $.shift_expression,
@@ -251,25 +247,28 @@ module.exports = grammar({
     range_expression: ($) => prec.left(3, seq($._expression, "..", $._expression)),
     or_expression: ($) => prec.left(4, seq($._expression, "||", $._expression)),
     and_expression: ($) => prec.left(5, seq($._expression, "&&", $._expression)),
+    bitor_expression: ($) => prec.left(6, seq($._expression, "|", $._expression)),
+    bitxor_expression: ($) => prec.left(7, seq($._expression, "^", $._expression)),
+    bitand_expression: ($) => prec.left(8, seq($._expression, "&", $._expression)),
     equality_expression: ($) =>
-      prec.left(6, seq($._expression, choice("==", "!="), $._expression)),
+      prec.left(9, seq($._expression, choice("==", "!="), $._expression)),
     comparison_expression: ($) =>
-      prec.left(7, seq($._expression, choice("<", ">", "<=", ">="), $._expression)),
+      prec.left(10, seq($._expression, choice("<", ">", "<=", ">="), $._expression)),
     shift_expression: ($) =>
-      prec.left(8, seq($._expression, choice("<<", ">>"), $._expression)),
+      prec.left(11, seq($._expression, choice("<<", ">>"), $._expression)),
     additive_expression: ($) =>
-      prec.left(9, seq($._expression, choice("+", "-"), $._expression)),
+      prec.left(12, seq($._expression, choice("+", "-"), $._expression)),
     multiplicative_expression: ($) =>
-      prec.left(10, seq($._expression, choice("*", "/", "%"), $._expression)),
-    power_expression: ($) => prec.right(11, seq($._expression, "**", $._expression)),
+      prec.left(13, seq($._expression, choice("*", "/", "%"), $._expression)),
+    power_expression: ($) => prec.right(14, seq($._expression, "**", $._expression)),
 
     unary_expression: ($) =>
       prec(
-        12,
+        15,
         seq(field("operator", choice("-", "!", "~")), field("operand", $._expression)),
       ),
 
-    try_expression: ($) => prec(13, seq($._expression, "?")),
+    try_expression: ($) => prec(16, seq($._expression, "?")),
 
     call_expression: ($) =>
       prec(
@@ -315,35 +314,74 @@ module.exports = grammar({
     float_literal: (_) => /[0-9][0-9_]*\.[0-9][0-9_]*/,
 
     // ── Strings ─────────────────────────────────────────────────────────
+    // `{expr}` interpolates; `{{` / `}}` are literal-brace escapes.
+    // Lone braces fall back to brace_content / rbrace so nothing valid
+    // ever ERRORs (`"{"` at end-of-string is the one known gap: the
+    // documented escapes are `\{` and `{{`, so bare `{` there is user
+    // error in real code too). Single-line complement [^A-Za-z_"] also
+    // serves triple strings (`{1}`, `{(a)}` still interpolate: the
+    // digit/paren is simply not in the complement).
     string: ($) =>
       seq(
         '"',
-        repeat(choice($.string_content, $.escape_sequence, $.interpolation)),
+        repeat(
+          choice(
+            $.string_content,
+            $.brace_content,
+            $.rbrace,
+            $.escape_sequence,
+            $.interpolation,
+          ),
+        ),
         token.immediate('"'),
       ),
 
     triple_string: ($) =>
       seq(
         '"""',
-        repeat(choice($.string_content, $.escape_sequence, $.interpolation)),
+        repeat(
+          choice(
+            $.string_content,
+            $.brace_content,
+            $.rbrace,
+            $.escape_sequence,
+            $.interpolation,
+          ),
+        ),
         '"""',
       ),
 
-    string_content: (_) => token(prec(-1, /[^{"\\]+/)),
+    string_content: (_) => /[^{"\\}]+/,
+
+    // `{` + non-interp char (2 chars — beats interpolation's 1-char
+    // opener by length; loses `{{` ties to escape via precedence).
+    brace_content: (_) => /\{[^A-Za-z_"]/,
+
+    // Lone `}` (2-char `}}` escape wins by length where doubled).
+    rbrace: (_) => "}",
 
     // `{expr}` — dynamic precedence prefers interpolation when a full
     // `... }` parse succeeds; lone braces fall back to string_content's
     // sibling token below.
     interpolation: ($) => prec.dynamic(1, seq("{", $._expression, "}")),
 
-    // `{expr}` interpolates; `{{` / `}}` are literal-brace escapes.
+    // `{expr}` interpolates; `{{` / `}}` are literal-brace escapes
+    // (prec 1 wins `{{` ties against brace_content).
     escape_sequence: (_) =>
-      token(choice(/\\[ntr\\"{}e]/, /\\x[0-9a-fA-F]{2}/, "{{", "}}")),
+      token(prec(1, choice(/\\[ntr\\"{}e]/, /\\x[0-9a-fA-F]{2}/, "{{", "}}"))),
 
     // ── Comments (nestable block) ───────────────────────────────────────
     line_comment: (_) => token(seq("//", /[^\n]*/)),
+    // Nested: `/` and `*` lex separately, so a nested `/*` opener
+    // (2 chars) always beats a lone `/` (1 char) and recursion wins.
+    // Trailing `\*+` + `/` closes runs like `/***/`.
     block_comment: ($) =>
-      seq("/*", repeat(choice(/[^*]+/, /\*[^\/]/, $.block_comment)), "*/"),
+      seq(
+        "/*",
+        repeat(choice(/[^*/]+/, /\//, /\*+[^/*]/, prec.dynamic(1, $.block_comment))),
+        /\*+/,
+        "/",
+      ),
   },
 });
 

@@ -18,10 +18,19 @@ struct User {
 
 (source_file
   (import_statement
-    module: (module_path))
+    module: (module_path
+      (identifier)))
+  (expression_statement
+    (variant))
   (import_statement
-    module: (module_path)
-    alias: (identifier))
+    module: (module_path
+      (identifier)))
+  (expression_statement
+    (variant))
+  (expression_statement
+    (identifier))
+  (expression_statement
+    (identifier))
   (function_definition
     name: (identifier)
     parameters: (parameter_list
@@ -32,10 +41,16 @@ struct User {
     body: (block
       (return_statement
         (string
+          (string_content)
           (interpolation
-            (identifier))))))
+            (identifier))
+          (string_content)))))
   (struct_definition
-    name: (type_identifier)))
+    name: (type_identifier)
+    (identifier)
+    (primitive_type)
+    (identifier)
+    (primitive_type)))
 
 ================================================================================
 Control flow and match
@@ -71,25 +86,34 @@ func classify(n: int) -> str {
         type: (primitive_type)))
     return_type: (primitive_type)
     body: (block
-      (if_expression
-        condition: (comparison_expression)
-        consequence: (block
-          (return_statement
-            (string)))
-        alternative: (block
-          (return_statement
-            (string))))
-      (match_expression
-        subject: (identifier)
-        (match_arm
-          pattern: (variant_pattern)
-          value: (identifier))
-        (match_arm
-          pattern: "_"
-          value: (int_literal)))
+      (expression_statement
+        (if_expression
+          condition: (comparison_expression
+            (identifier)
+            (int_literal))
+          consequence: (block
+            (return_statement
+              (string
+                (string_content))))
+          alternative: (block
+            (return_statement
+              (string
+                (string_content))))))
+      (expression_statement
+        (match_expression
+          subject: (identifier)
+          (match_arm
+            pattern: (variant_pattern
+              (identifier)
+              (identifier))
+            value: (identifier))
+          (match_arm
+            value: (int_literal))))
       (for_loop
         pattern: (identifier)
-        iterator: (range_expression)
+        iterator: (range_expression
+          (int_literal)
+          (int_literal))
         body: (block
           (expression_statement
             (call_expression
@@ -102,7 +126,8 @@ func classify(n: int) -> str {
         body: (block
           (break_statement)))
       (return_statement
-        (string)))))
+        (string
+          (string_content))))))
 
 ================================================================================
 Operators, strings and comments
@@ -121,19 +146,35 @@ f := 1.5
 
 (source_file
   (line_comment)
-  (block_comment)
+  (block_comment
+    (block_comment))
   (declare_statement
     name: (identifier)
-    value: (additive_expression))
+    value: (additive_expression
+      (int_literal)
+      (power_expression
+        (int_literal)
+        (int_literal))))
   (declare_statement
     name: (identifier)
-    value: (elvis_expression))
+    value: (elvis_expression
+      (pipe_expression
+        (identifier)
+        (call_expression
+          function: (identifier)))
+      (int_literal)))
   (declare_statement
     name: (identifier)
     value: (triple_string
-      (interpolation)
+      (string_content)
+      (interpolation
+        (additive_expression
+          (identifier)
+          (int_literal)))
       (escape_sequence)
-      (escape_sequence)))
+      (string_content)
+      (escape_sequence)
+      (string_content)))
   (declare_statement
     name: (identifier)
     value: (float_literal)))
