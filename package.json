@@ -5,7 +5,7 @@
   "keywords": ["tree-sitter", "zz", "parser"],
   "author": "zaidejjo",
   "license": "MIT",
-  "repository": "https://github.com/zaidejjo/tree-sitter-zz",
+  "repository": "https://github.com/zz-language/tree-sitter-zz",
   "scripts": {
     "generate": "tree-sitter generate",
     "test": "tree-sitter test",

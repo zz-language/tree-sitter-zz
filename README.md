@@ -20,7 +20,7 @@ vim.filetype.add({ extension = { zz = "zz" } })
 ```
 
 The `queries/` folder (highlights, folds, indents) is mirrored in
-`../nvim/zz-lang.nvim/queries/zz/` — keep both in sync.
+`../nvim/nvim-zz/queries/zz/` — keep both in sync.
 
 ## GitHub language statistics (Linguist)
 
@@ -50,7 +50,7 @@ ZZ:
 
 Notes:
 - `color` must not collide with an existing language color; if CI
-  complains, pick another and update `vscode/zz-vscode` icon + docs.
+  complains, pick another and update `vscode/vscode-zz` icon + docs.
 - `language_id` must be unique — ask the maintainers for one in the PR.
 
 ## License
