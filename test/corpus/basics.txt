@@ -1,0 +1,139 @@
+================================================================================
+Functions and structs
+================================================================================
+
+import std.http
+import std.fs as fs
+
+func greet(name: str) -> str {
+    return "Hello, {name}!"
+}
+
+struct User {
+    name: str,
+    age: int,
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (import_statement
+    module: (module_path))
+  (import_statement
+    module: (module_path)
+    alias: (identifier))
+  (function_definition
+    name: (identifier)
+    parameters: (parameter_list
+      (parameter
+        name: (identifier)
+        type: (primitive_type)))
+    return_type: (primitive_type)
+    body: (block
+      (return_statement
+        (string
+          (interpolation
+            (identifier))))))
+  (struct_definition
+    name: (type_identifier)))
+
+================================================================================
+Control flow and match
+================================================================================
+
+func classify(n: int) -> str {
+    if n > 0 {
+        return "pos"
+    } else {
+        return "neg"
+    }
+    match n {
+        .some(v) => v,
+        _ => 0,
+    }
+    for x in 0..10 {
+        println("{x}")
+    }
+    while true {
+        break
+    }
+    return "done"
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_definition
+    name: (identifier)
+    parameters: (parameter_list
+      (parameter
+        name: (identifier)
+        type: (primitive_type)))
+    return_type: (primitive_type)
+    body: (block
+      (if_expression
+        condition: (comparison_expression)
+        consequence: (block
+          (return_statement
+            (string)))
+        alternative: (block
+          (return_statement
+            (string))))
+      (match_expression
+        subject: (identifier)
+        (match_arm
+          pattern: (variant_pattern)
+          value: (identifier))
+        (match_arm
+          pattern: "_"
+          value: (int_literal)))
+      (for_loop
+        pattern: (identifier)
+        iterator: (range_expression)
+        body: (block
+          (expression_statement
+            (call_expression
+              function: (identifier)
+              (string
+                (interpolation
+                  (identifier)))))))
+      (while_loop
+        condition: (boolean)
+        body: (block
+          (break_statement)))
+      (return_statement
+        (string)))))
+
+================================================================================
+Operators, strings and comments
+================================================================================
+
+// line comment
+/* block /* nested */ comment */
+x := 1 + 2 ** 3
+y := x |> int() ?? 0
+s := """
+multi {x + 1} {{literal}} line
+"""
+f := 1.5
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (line_comment)
+  (block_comment)
+  (declare_statement
+    name: (identifier)
+    value: (additive_expression))
+  (declare_statement
+    name: (identifier)
+    value: (elvis_expression))
+  (declare_statement
+    name: (identifier)
+    value: (triple_string
+      (interpolation)
+      (escape_sequence)
+      (escape_sequence)))
+  (declare_statement
+    name: (identifier)
+    value: (float_literal)))
