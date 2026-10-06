@@ -37,8 +37,7 @@ module.exports = grammar({
         optional(seq("as", field("alias", $.identifier))),
       ),
 
-    module_path: ($) => seq($.identifier, repeat(seq(".", $.identifier))),
-
+    module_path: ($) => token(/[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*/),
     decorator: ($) => seq("@", $.identifier),
 
     // ── Top-level definitions ───────────────────────────────────────────
@@ -101,8 +100,13 @@ module.exports = grammar({
 
     primitive_type: (_) => choice("int", "float", "bool", "str", "unit", "void"),
 
+    // ZZ type names are often lowercase (http.server, http.request):
+    // Capitalized is conventional, not required.
     named_type: ($) =>
-      seq(field("name", $.type_identifier), optional(seq("<", commaSep1($._type), ">"))),
+      seq(
+        field("scope", optional(seq($.identifier, "."))),
+        field("name", choice($.type_identifier, $.identifier)),
+        optional(seq("<", commaSep1($._type), ">"))),
 
     type_identifier: (_) => /[A-Z][A-Za-z0-9_]*/,
 
@@ -154,6 +158,21 @@ module.exports = grammar({
           field("condition", $._expression),
           field("consequence", $.block),
           optional(seq("else", field("alternative", choice($.block, $.if_expression)))),
+        ),
+      ),
+
+    if_let_expression: ($) =>
+      prec.right(
+        seq(
+          "if",
+          "let",
+          field("pattern", $._match_pattern),
+          "=",
+          field("value", $._expression),
+          field("consequence", $.block),
+          optional(
+            seq("else", field("alternative", choice($.block, $.if_expression))),
+          ),
         ),
       ),
 
@@ -214,6 +233,7 @@ module.exports = grammar({
         $.index_expression,
         $.closure_expression,
         $.if_expression,
+        $.if_let_expression,
         $.match_expression,
         $.identifier,
         $.variant,
@@ -304,7 +324,9 @@ module.exports = grammar({
 
     tuple_literal: ($) => seq("(", $._expression, ",", commaSep($._expression), ")"),
 
-    variant: (_) => /\.[a-z][A-Za-z0-9_]*/,
+    // `.name` is ONE token shape (see variant below): field access and
+    // leading variants disambiguate by position, never by lexing.
+    variant: ($) => seq(".", $.identifier),
 
     identifier: (_) => /[a-z_][A-Za-z0-9_]*/,
 

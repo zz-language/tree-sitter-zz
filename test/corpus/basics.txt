@@ -18,19 +18,10 @@ struct User {
 
 (source_file
   (import_statement
-    module: (module_path
-      (identifier)))
-  (expression_statement
-    (variant))
+    module: (module_path))
   (import_statement
-    module: (module_path
-      (identifier)))
-  (expression_statement
-    (variant))
-  (expression_statement
-    (identifier))
-  (expression_statement
-    (identifier))
+    module: (module_path)
+    alias: (identifier))
   (function_definition
     name: (identifier)
     parameters: (parameter_list

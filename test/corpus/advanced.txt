@@ -1,0 +1,79 @@
+================================================================================
+Advanced definitions and expressions
+================================================================================
+
+@test
+pub func handle(req: http.request) -> str | http.response {
+    if let .some(v) = maybe(req) {
+        return v
+    } else {
+        return http.ok("none")
+    }
+}
+
+pub const limit: int = 100
+
+extern "c" {
+    func puts(s: str) -> int;
+}
+
+t := f()? |> g(1)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_definition
+    (decorator
+      (identifier))
+    name: (identifier)
+    parameters: (parameter_list
+      (parameter
+        name: (identifier)
+        type: (named_type
+          scope: (identifier)
+          name: (identifier))))
+    return_type: (union_type
+      (primitive_type)
+      (named_type
+        scope: (identifier)
+        name: (identifier)))
+    body: (block
+      (expression_statement
+        (if_let_expression
+          pattern: (variant_pattern
+            (identifier)
+            (identifier))
+          value: (call_expression
+            function: (identifier)
+            (identifier))
+          consequence: (block
+            (return_statement
+              (identifier)))
+          alternative: (block
+            (return_statement
+              (call_expression
+                function: (field_expression
+                  object: (identifier)
+                  field: (identifier))
+                (string
+                  (string_content)))))))))
+  (const_definition
+    name: (identifier)
+    (primitive_type)
+    (int_literal))
+  (extern_block
+    (identifier)
+    (parameter_list
+      (parameter
+        name: (identifier)
+        type: (primitive_type)))
+    (primitive_type))
+  (declare_statement
+    name: (identifier)
+    value: (pipe_expression
+      (try_expression
+        (call_expression
+          function: (identifier)))
+      (call_expression
+        function: (identifier)
+        (int_literal)))))
